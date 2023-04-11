@@ -1,1 +1,0 @@
-Golf Ball by AlteredDimensions on Thingiverse: https://www.thingiverse.com/thing:1640986

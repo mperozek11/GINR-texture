@@ -1,1 +1,0 @@
-Spikey ball or massage ball or toy by Fippelnisse on Thingiverse: https://www.thingiverse.com/thing:4357441

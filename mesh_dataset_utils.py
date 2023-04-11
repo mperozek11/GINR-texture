@@ -78,13 +78,15 @@ def smooth_mesh_tm(mesh, iterations):
 # ======================================
 
 
-def build_offset_dataset(mesh, smooth_iter=200, lap_type='std'):
+def build_offset_dataset(mesh, smooth_iter=200, lap_type='mesh'):
     smooth, orig = smooth_mesh_tm(mesh, iterations=smooth_iter)
     offsets = get_offsets(smooth, orig)
     
     if lap_type == 'mesh':
         e_vals, e_vecs = mesh_laplacian_eigenmap(np.array(smooth.vertices), np.array(smooth.faces), 100)
     else:
+        # note that laplacian_eigenmap implementation is very inneficient at the moment. 
+        # Pretty sure the slowness comes from using nx laplacian calculation which is really slow on larger graphs.
         gr = smooth.vertex_adjacency_graph
         e_vals, e_vecs = laplacian_eigenmap(gr, 100)
     
@@ -95,7 +97,7 @@ def build_offset_dataset(mesh, smooth_iter=200, lap_type='std'):
           }
     return dataset, smooth
 
-def build_blank_dataset(blank, DIR_NAME, lap_type='std'):
+def build_blank_dataset(blank, DIR_NAME, lap_type='mesh'):
     if lap_type == 'mesh':
         e_vals, e_vecs = mesh_laplacian_eigenmap(np.array(blank.vertices), np.array(blank.faces), 100)
     else:
