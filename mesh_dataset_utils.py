@@ -70,16 +70,30 @@ def smooth_mesh_tm(mesh, iterations):
     orig = mesh
     smooth = mesh.copy()
     smooth = trimesh.smoothing.filter_laplacian(smooth, iterations=iterations)
-    
+    print("laplacian")
     return smooth, orig
+# smoothes a mesh using mutable diffusion laplacian smoothing
+def smooth_mesh_mut_dif(mesh, iterations):
+    orig = mesh
+    smooth = mesh.copy()
+    smooth = trimesh.smoothing.filter_mut_dif_laplacian(smooth, iterations=iterations)
+    print("mut dif")
+    return smooth, orig
+#smoothes a mesh using taubin smoothing
+def smooth_mesh_taubin(mesh, iterations):
+    orig = mesh
+    smooth = mesh.copy()
+    smooth = trimesh.smoothing.filter_taubin(smooth, iterations=iterations)
+    print("taubin")
 
+    return smooth, orig
 # ======================================
 # ========= DATASET BUILDERS ===========
 # ======================================
 
 
 def build_offset_dataset(mesh, smooth_iter=200, lap_type='mesh'):
-    smooth, orig = smooth_mesh_tm(mesh, iterations=smooth_iter)
+    smooth, orig = smooth_mesh_mut_dif(mesh, iterations=smooth_iter)
     offsets = get_offsets(smooth, orig)
     
     if lap_type == 'mesh':
