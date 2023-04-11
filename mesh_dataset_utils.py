@@ -132,8 +132,9 @@ def get_sphere(size=0):
 # ======================================
 
 
+# blank: trimesh mesh object
+# offset_preds: np array of model predictions. shape (N,3) where N=number of vertices in blank mesh
 def generate_pred_mesh(offset_preds, blank):
-    pred_verts =  blank.vertices + offset_preds['preds']
+    pred_verts =  blank.vertices - offset_preds
     inference = trimesh.Trimesh(vertices=pred_verts, faces=blank.faces)
-    inference = trimesh.repair.fill_holes(inference)
     return inference
