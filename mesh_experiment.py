@@ -68,9 +68,10 @@ class Experiment:
             run_num (int) The iteration of random init for this particular training run
 
         Returns:
-            best_loss (float) Best evaluation loss over training. This is the model saved as best model state dict
-            training_losses (np.array)
-            eval_losses (np.array)
+            dict of:
+                best_loss (float) Best evaluation loss over training. This is the model saved as best model state dict
+                training_losses (np.array)
+                eval_losses (np.array)
         """
 
         self.model.train()
