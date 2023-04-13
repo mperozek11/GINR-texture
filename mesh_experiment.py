@@ -106,7 +106,7 @@ class Experiment:
             if i % 5 == 0:
                 print(f'epoch {i} training loss: {mean_loss} eval loss: {eval_loss}')
 
-        torch.save(best_model, f'{self.OUT_DIR}/best-model-parameters.pt')
+        torch.save(best_model, f'{self.OUT_DIR}run_{run_num}/best-model-parameters.pt')
         return {
             'run' : run_num,
             'best_loss' : best_loss,
@@ -136,6 +136,6 @@ class Experiment:
             train_results.append(self.train(i))
 
         train_results = np.array(train_results)
-        self.exp_log.update(train_results)
+        self.exp_log['train_results'] = train_results
         return self.exp_log
         
