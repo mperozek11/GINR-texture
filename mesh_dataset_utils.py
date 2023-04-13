@@ -61,6 +61,23 @@ def get_offsets(obj1, obj2):
         offsets[i] = obj1.vertices[i]-obj2.vertices[i]
     return offsets
 
+"""Gets surface normal transformation targets from smoothed mesh to original
+
+Calculates the surface normal for each vertex on the smooth mesh and its corresponding normal on the original mesh.
+Then calculates the linear transformation matrix that transforms the smoothed normal to the original normal.
+Finally, linear transformation matrices are flattened.
+
+Args:
+    smooth (trimesh mesh) smoothed mesh
+    orig (trimesh mesh) original mesh
+Returns:
+    lin_trans (np.array) array of shape (V, 9) where V is the number of vertices in the mesh, and each entry
+        is the flattened linear transformation matrix of surface normals for the corresponding pair of vertices.
+"""
+def get_linear_transformations(smooth, orig):
+    pass
+    # get_linear_transformation(x1, x2)
+
 # ======================================
 # ============= SMOOTHING ==============
 # ======================================
@@ -111,6 +128,26 @@ def build_offset_dataset(mesh, smooth_iter=200, lap_type='mesh'):
           }
     return dataset, smooth
 
+def build_norms_dataset(mesh, smooth_iter=200, lap_type='mesh'):
+    smooth, orig = smooth_mesh_mut_dif(mesh, iterations=smooth_iter)
+    lin_trans = get_linear_transformations(smooth, orig)
+    
+    if lap_type == 'mesh':
+        e_vals, e_vecs = mesh_laplacian_eigenmap(np.array(smooth.vertices), np.array(smooth.faces), 100)
+    else:
+        # note that laplacian_eigenmap implementation is very inneficient at the moment. 
+        # Pretty sure the slowness comes from using nx laplacian calculation which is really slow on larger graphs.
+        gr = smooth.vertex_adjacency_graph
+        e_vals, e_vecs = laplacian_eigenmap(gr, 100)
+    
+    dataset = {
+        'fourier' : e_vecs,
+        'points' : smooth.vertices,
+        'target' : lin_trans      
+          }
+    return dataset, smooth
+
+
 def build_blank_dataset(blank, DIR_NAME, lap_type='mesh'):
     if lap_type == 'mesh':
         e_vals, e_vecs = mesh_laplacian_eigenmap(np.array(blank.vertices), np.array(blank.faces), 100)
@@ -140,6 +177,28 @@ def get_sphere(size=0):
         new_verts, new_faces = trimesh.remesh.subdivide_loop(sphere.vertices, sphere.faces, iterations=size)
         sphere = trimesh.Trimesh(vertices=new_verts, faces=new_faces)
     return sphere
+
+# ======================================
+# =============== NORMS  ===============
+# ======================================
+
+"""Computes the linear transformation that maps x1 to x2
+
+Args:
+    x1 (np.array) input vector
+    x2 (np.array) transformed vector
+
+Returns:
+    A (np.array) Array representing the linear transformation from x1 to x2
+
+"""
+def get_linear_transformation(x1, x2):
+    X1 = np.vstack([x1])
+    X2 = np.vstack([x2])
+    
+    A, residuals, rank, s = np.linalg.lstsq(X1, X2, rcond=None)
+    
+    return A
 
 # ======================================
 # ========= APPLY INFERENCE ============
