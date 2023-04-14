@@ -197,7 +197,7 @@ def get_linear_transformation(x1, x2):
     X2 = np.vstack([x2])
     
     A, residuals, rank, s = np.linalg.lstsq(X1, X2, rcond=None)
-    
+    print(residuals)
     return A
 
 # ======================================

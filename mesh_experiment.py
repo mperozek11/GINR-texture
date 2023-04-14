@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import os
 
 class Experiment:
     
@@ -105,8 +106,10 @@ class Experiment:
                 best_loss = eval_loss
             if i % 5 == 0:
                 print(f'epoch {i} training loss: {mean_loss} eval loss: {eval_loss}')
-
-        torch.save(best_model, f'{self.OUT_DIR}run_{run_num}/best-model-parameters.pt')
+        
+        if not os.path.exists(f'{self.OUT_DIR}/run_{run_num}/'):
+            os.makedirs(f'{self.OUT_DIR}/run_{run_num}/')
+        torch.save(best_model, f'{self.OUT_DIR}/run_{run_num}/best-model-parameters.pt')
         return {
             'run' : run_num,
             'best_loss' : best_loss,
