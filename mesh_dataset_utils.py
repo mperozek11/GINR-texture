@@ -79,7 +79,6 @@ def get_transform(x1, x2):
     X2 = np.vstack([x2])
     
     A, residuals, rank, s = np.linalg.lstsq(X1, X2, rcond=None)
-    print(residuals)
     return A.reshape((36,))
 
 
@@ -111,34 +110,48 @@ def get_linear_transformations(smooth, orig):
 # ======================================
 
 # smoothes a mesh using trimesh laplacian smoothing
-def smooth_mesh_tm(mesh, iterations):
+def smooth_mesh_lap(mesh, iterations):
     orig = mesh
     smooth = mesh.copy()
     smooth = trimesh.smoothing.filter_laplacian(smooth, iterations=iterations)
-    print("laplacian")
+    # print("laplacian")
     return smooth, orig
 # smoothes a mesh using mutable diffusion laplacian smoothing
 def smooth_mesh_mut_dif(mesh, iterations):
     orig = mesh
     smooth = mesh.copy()
     smooth = trimesh.smoothing.filter_mut_dif_laplacian(smooth, iterations=iterations)
-    print("mut dif")
+    # print("mut dif")
     return smooth, orig
 #smoothes a mesh using taubin smoothing
 def smooth_mesh_taubin(mesh, iterations):
     orig = mesh
     smooth = mesh.copy()
     smooth = trimesh.smoothing.filter_taubin(smooth, iterations=iterations)
-    print("taubin")
+    # print("taubin")
 
     return smooth, orig
+
+def smooth_mesh(mesh, iterations, type='lap'):
+    if type == 'lap':
+        return smooth_mesh_lap(mesh, iterations)
+    elif type == 'taubin':
+        return smooth_mesh_taubin(mesh, iterations)
+    elif type == 'mut_dif':
+        return smooth_mesh_mut_dif(mesh, iterations)
+    else:
+        raise Exception(f'{type} not valid smoothing method. Choose from: lap, taubin, mut_dif')
+
+
+
 # ======================================
 # ========= DATASET BUILDERS ===========
 # ======================================
 
 
-def build_offset_dataset(mesh, smooth_iter=200, lap_type='mesh'):
-    smooth, orig = smooth_mesh_mut_dif(mesh, iterations=smooth_iter)
+def build_offset_dataset(mesh, smooth_iter=200, lap_type='mesh', smooth_type='lap'):
+
+    smooth, orig = smooth_mesh(mesh, smooth_iter, type=smooth_type)
     offsets = get_offsets(smooth, orig)
     
     if lap_type == 'mesh':
@@ -156,8 +169,9 @@ def build_offset_dataset(mesh, smooth_iter=200, lap_type='mesh'):
           }
     return dataset, smooth
 
-def build_norms_dataset(mesh, smooth_iter=200, lap_type='mesh'):
-    smooth, orig = smooth_mesh_mut_dif(mesh, iterations=smooth_iter)
+def build_norms_dataset(mesh, smooth_iter=200, lap_type='mesh', smooth_type='lap'):
+    
+    smooth, orig = smooth_mesh(mesh, smooth_iter, type=smooth_type)
     lin_trans = get_linear_transformations(smooth, orig)
     
     if lap_type == 'mesh':
