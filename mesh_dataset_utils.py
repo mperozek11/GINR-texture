@@ -128,6 +128,25 @@ def build_offset_dataset(mesh, smooth_iter=200, lap_type='mesh'):
           }
     return dataset, smooth
 
+def build_lintrans_dataset(mesh, smooth_iter=200, lap_type='mesh'):
+    smooth, orig = smooth_mesh_mut_dif(mesh, iterations=smooth_iter)
+    lin_trans_param = surface_normals(mesh, smooth)
+    
+    if lap_type == 'mesh':
+        e_vals, e_vecs = mesh_laplacian_eigenmap(np.array(smooth.vertices), np.array(smooth.faces), 100)
+    else:
+        # note that laplacian_eigenmap implementation is very inneficient at the moment. 
+        # Pretty sure the slowness comes from using nx laplacian calculation which is really slow on larger graphs.
+        gr = smooth.vertex_adjacency_graph
+        e_vals, e_vecs = laplacian_eigenmap(gr, 100)
+    
+    dataset = {
+        'fourier' : e_vecs,
+        'points' : smooth.vertices,
+        'target' : lin_trans_param      
+          }
+    return dataset, smooth
+
 def build_norms_dataset(mesh, smooth_iter=200, lap_type='mesh'):
     smooth, orig = smooth_mesh_mut_dif(mesh, iterations=smooth_iter)
     lin_trans = get_linear_transformations(smooth, orig)
@@ -199,6 +218,23 @@ def get_linear_transformation(x1, x2):
     A, residuals, rank, s = np.linalg.lstsq(X1, X2, rcond=None)
     print(residuals)
     return A
+
+# pre_smooth: trimesh textured object
+# post_smooth: trimesh smoothed object
+def surface_normals(pre_smooth, post_smooth):
+    vn_pre = pre_smooth.vertex_normals
+    vn_post = post_smooth.vertex_normals
+
+    lin_transformation = []
+    for i in range(vn_pre.shape[0]):
+        vn_pre2 = np.append(vn_pre[i], [1,1,1], axis = 0).reshape(2,3)
+        vn_post2 = np.append(vn_post[i], [1,1,1], axis = 0).reshape(2,3)
+        
+        A, residuals, rank, s = np.linalg.lstsq(vn_pre2, vn_post2, rcond=None)
+        lin_transformation.append(A)
+    
+    lin_transformation = np.asarray(lin_transformation)
+    return lin_transformation
 
 # ======================================
 # ========= APPLY INFERENCE ============
