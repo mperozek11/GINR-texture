@@ -61,6 +61,28 @@ def get_offsets(obj1, obj2):
         offsets[i] = obj1.vertices[i]-obj2.vertices[i]
     return offsets
 
+"""Computes the linear transformation that maps x1 to x2
+
+Args:
+    x1 (np.array) input vector
+    x2 (np.array) transformed vector
+
+Returns:
+    A (np.array) Array representing the linear transformation from x1 to x2
+
+"""
+def get_transform(x1, x2):
+    assert x1.shape[0] == 6
+    assert x1.shape[0] == 6
+
+    X1 = np.vstack([x1])
+    X2 = np.vstack([x2])
+    
+    A, residuals, rank, s = np.linalg.lstsq(X1, X2, rcond=None)
+    print(residuals)
+    return A.reshape((36,))
+
+
 """Gets surface normal transformation targets from smoothed mesh to original
 
 Calculates the surface normal for each vertex on the smooth mesh and its corresponding normal on the original mesh.
@@ -75,8 +97,14 @@ Returns:
         is the flattened linear transformation matrix of surface normals for the corresponding pair of vertices.
 """
 def get_linear_transformations(smooth, orig):
-    pass
-    # get_linear_transformation(x1, x2)
+    smooth_sns = surface_normals = np.concatenate((smooth.vertex_normals, smooth.vertices), axis=1)
+    orig_sns = surface_normals = np.concatenate((orig.vertex_normals, orig.vertices), axis=1)
+
+    all_lin_trans = np.zeros((smooth_sns.shape[0], 36))
+    for i in range(smooth_sns.shape[0]):
+        all_lin_trans[i,:] = get_transform(smooth_sns[i,:], orig_sns[i,:])
+    
+    return all_lin_trans
 
 # ======================================
 # ============= SMOOTHING ==============
@@ -128,25 +156,6 @@ def build_offset_dataset(mesh, smooth_iter=200, lap_type='mesh'):
           }
     return dataset, smooth
 
-def build_lintrans_dataset(mesh, smooth_iter=200, lap_type='mesh'):
-    smooth, orig = smooth_mesh_mut_dif(mesh, iterations=smooth_iter)
-    lin_trans_param = surface_normals(mesh, smooth)
-    
-    if lap_type == 'mesh':
-        e_vals, e_vecs = mesh_laplacian_eigenmap(np.array(smooth.vertices), np.array(smooth.faces), 100)
-    else:
-        # note that laplacian_eigenmap implementation is very inneficient at the moment. 
-        # Pretty sure the slowness comes from using nx laplacian calculation which is really slow on larger graphs.
-        gr = smooth.vertex_adjacency_graph
-        e_vals, e_vecs = laplacian_eigenmap(gr, 100)
-    
-    dataset = {
-        'fourier' : e_vecs,
-        'points' : smooth.vertices,
-        'target' : lin_trans_param      
-          }
-    return dataset, smooth
-
 def build_norms_dataset(mesh, smooth_iter=200, lap_type='mesh'):
     smooth, orig = smooth_mesh_mut_dif(mesh, iterations=smooth_iter)
     lin_trans = get_linear_transformations(smooth, orig)
@@ -161,7 +170,7 @@ def build_norms_dataset(mesh, smooth_iter=200, lap_type='mesh'):
     
     dataset = {
         'fourier' : e_vecs,
-        'points' : smooth.vertices,
+        'points' : np.concatenate((smooth.vertex_normals, smooth.vertices), axis=1),
         'target' : lin_trans      
           }
     return dataset, smooth
@@ -197,44 +206,6 @@ def get_sphere(size=0):
         sphere = trimesh.Trimesh(vertices=new_verts, faces=new_faces)
     return sphere
 
-# ======================================
-# =============== NORMS  ===============
-# ======================================
-
-"""Computes the linear transformation that maps x1 to x2
-
-Args:
-    x1 (np.array) input vector
-    x2 (np.array) transformed vector
-
-Returns:
-    A (np.array) Array representing the linear transformation from x1 to x2
-
-"""
-def get_linear_transformation(x1, x2):
-    X1 = np.vstack([x1])
-    X2 = np.vstack([x2])
-    
-    A, residuals, rank, s = np.linalg.lstsq(X1, X2, rcond=None)
-    print(residuals)
-    return A
-
-# pre_smooth: trimesh textured object
-# post_smooth: trimesh smoothed object
-def surface_normals(pre_smooth, post_smooth):
-    vn_pre = pre_smooth.vertex_normals
-    vn_post = post_smooth.vertex_normals
-
-    lin_transformation = []
-    for i in range(vn_pre.shape[0]):
-        vn_pre2 = np.append(vn_pre[i], [1,1,1], axis = 0).reshape(2,3)
-        vn_post2 = np.append(vn_post[i], [1,1,1], axis = 0).reshape(2,3)
-        
-        A, residuals, rank, s = np.linalg.lstsq(vn_pre2, vn_post2, rcond=None)
-        lin_transformation.append(A)
-    
-    lin_transformation = np.asarray(lin_transformation)
-    return lin_transformation
 
 # ======================================
 # ========= APPLY INFERENCE ============
