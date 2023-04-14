@@ -1,6 +1,8 @@
 import torch
 import numpy as np
 import os
+import json
+import copy
 
 class Experiment:
     
@@ -37,7 +39,7 @@ class Experiment:
         Returns:
             self
         """
-
+        self.untrained_model_state_dict = copy.deepcopy(model.state_dict())
         self.model = model
         self.optimizer = optimizer
         self.loss_fn = loss_fn
@@ -97,7 +99,7 @@ class Experiment:
                 self.optimizer.step()
             
             mean_loss = np.array(losses).sum() / len(losses) # technically not quite right cuz partial batches will be weighted slightly higher (we will survive)
-            training_losses[i] = mean_loss
+            training_losses[i] = mean_loss.item()
 
             eval_loss = self.evaluate()
             eval_losses[i] = eval_loss
@@ -110,19 +112,18 @@ class Experiment:
         if not os.path.exists(f'{self.OUT_DIR}/run_{run_num}/'):
             os.makedirs(f'{self.OUT_DIR}/run_{run_num}/')
         torch.save(best_model, f'{self.OUT_DIR}/run_{run_num}/best-model-parameters.pt')
+
         return {
             'run' : run_num,
             'best_loss' : best_loss,
-            'train_losses' : training_losses,
-            'eval_losses' : eval_losses
+            'train_losses' : training_losses.flatten().tolist(),
+            'eval_losses' : eval_losses.flatten().tolist()
             }
         
     def evaluate(self):
         self.model.eval()
         with torch.no_grad():
             
-            correct = 0
-            total = 0
             for batch in self.test_loader:
                 batchX = batch[0]
                 batchY = batch[1]
@@ -130,15 +131,23 @@ class Experiment:
                 preds = self.model(batchX)
                 loss = self.loss_fn(preds, batchY)
             
-            return loss.detach().numpy()
+            return loss.detach().numpy().item()
         
     def run(self):
         train_results = []
+        best_rand_init_loss = 1e10
         for i in range(self.rand_inits):
+            self.model.load_state_dict(self.untrained_model_state_dict)
+            res = self.train(i)
+            train_results.append(res)
+            if res['best_loss'] < best_rand_init_loss:
+                self.exp_log['best_rand_init'] = i
             
-            train_results.append(self.train(i))
+        train_results = train_results
+        self.exp_log['train_results'] = train_results 
 
-        train_results = np.array(train_results)
-        self.exp_log['train_results'] = train_results
+        with open(f'{self.OUT_DIR}/exp_info.json', 'w') as f:
+            json.dump(self.exp_log, f)
+        
         return self.exp_log
         
