@@ -39,6 +39,9 @@ class Experiment:
         Returns:
             self
         """
+        
+        #############################################################################################
+        
         self.untrained_model_state_dict = copy.deepcopy(model.state_dict())
         self.model = model
         self.optimizer = optimizer
@@ -77,6 +80,8 @@ class Experiment:
                 eval_losses (np.array)
         """
 
+        ######################################################################################################
+        
         self.model.train()
         print(f'started training for {self.epochs} epochs')
         training_losses = np.zeros((self.epochs, 1))
@@ -121,6 +126,16 @@ class Experiment:
             }
         
     def evaluate(self):
+        
+        """Evaluates the loss of the predictions vs the targets
+        
+        Calculates the loss between the predicted offsets vs the actual offsets.
+    
+        Returns:
+            scalar: loss values of predictions and targets"""
+        
+        ################################################################################################################
+        
         self.model.eval()
         with torch.no_grad():
             
@@ -134,6 +149,11 @@ class Experiment:
             return loss.detach().numpy().item()
         
     def run(self):
+        """Runs the GINR model
+    
+        Returns:
+            dictionary: a log of all data in training"""
+        
         train_results = []
         best_rand_init_loss = 1e10
         for i in range(self.rand_inits):
