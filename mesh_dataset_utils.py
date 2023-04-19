@@ -323,7 +323,7 @@ def build_norms_dataset(mesh, smooth_iter=200, lap_type='mesh', smooth_type='lap
         dictionary: dictionary of all data of mesh (eigen vectors, normals and vertices of smoothed mesh, 
         targets of surface normals)
         mesh: smoothed mesh of original mesh"""
-
+    
     smooth, orig = smooth_mesh(mesh, smooth_iter, type=smooth_type)
     lin_trans = get_linear_transformations(smooth, orig)
     
@@ -341,6 +341,43 @@ def build_norms_dataset(mesh, smooth_iter=200, lap_type='mesh', smooth_type='lap
         'faces': smooth.faces,
         'target' : lin_trans      
           }
+    return dataset, smooth
+
+def build_time_dataset(mesh, smooth_iter, lap_type='mesh', smooth_type='lap', sample_size=.20, type_of_offset='norm'):
+    
+    """Creates a dataset for the normal of offsets between original mesh and the smoothed mesh
+
+    Smooths the given mesh based on a given number of iterations and then calculates the linear
+    transformation between the original and smooth mesh. Then, calculates the eigen values and 
+    vectors of the smooth mesh and places the data in a dictionary divided into fouriers, points, 
+    and targets. Takes the sample of the dataset before returning the dataset as well as the smoothed mesh
+
+    Args:
+        mesh (mesh): mesh of the current object
+        smooth_iter (int): number of times smoothing algorithm is applied to mesh
+        lap_type (string): type of laplacian for eigen data
+        smooth_type (string): type of smoothing algorithm used on mesh
+        sample_size (float): size of sample
+
+    Returns:
+        dictionary: dictionary of a sample dataset of the mesh (eigen vectors, normals and vertices of smoothed mesh, 
+        targets of surface normals)
+        mesh: smoothed mesh of original mesh"""
+    
+    dataset={}
+    if(type_of_offset=='norm'):
+        #print("inside1")
+        dataset, smooth=build_norms_dataset(mesh, smooth_iter, lap_type, smooth_type)
+    else:
+        #print("inside")
+        dataset, smooth=build_offset_dataset(mesh, smooth_iter, lap_type, smooth_type)
+    #picks indices from the dataset (assuming that len(fouriers)=len(targets))
+    
+    sample_indices=np.random.sample(range(0, len(dataset['fourier']), len(dataset['fourier']*sample_size)
+    dataset={
+        'fourier':[dataset['fourier'][i] for i in sample_indices],
+        'targets':[dataset['target'][i] for i in sample_indices]
+    }
     return dataset, smooth
 
 
