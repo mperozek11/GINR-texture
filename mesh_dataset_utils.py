@@ -35,8 +35,6 @@ def laplacian_eigenmap(gr, k, lap=None):
         numpy array (shape: (N, k)): eigen vectors 
         (N = # of nodes in gr, k = # of eigen values)"""
     
-    #################################################################################
-    
     lap = nx.laplacian_matrix(gr)
     lap = lap.asfptype()
     eigs = scipy.sparse.linalg.eigsh(lap, k=k)
@@ -60,8 +58,6 @@ def mesh_laplacian_eigenmap(verts, faces, k, lap=None):
     Returns:
         numpy array (shape: (k,): eigen values
         numpy array (shape: (N, k)): eigen vectors"""
-    
-    #################################################################################
     
     L, M = robust_laplacian.mesh_laplacian(verts, faces)
     # L = L.asfptype()
@@ -90,8 +86,6 @@ def get_dists(obj1, obj2):
         numpy array (shape: (V, k)): array of distances between all vertices 
         (V = # of Vertices, k = shape of normal, most likely 1)"""
     
-    #################################################################################
-    
     if obj1.vertices.shape[0] != obj2.vertices.shape[0]:
         raise Exception('objects are not one-to-one')
     
@@ -115,8 +109,6 @@ def get_offsets(obj1, obj2):
         numpy array (shape: (V, k)): array of distances between all vertices 
         (V = # of Vertices, k = shape of a vertice)"""
     
-    #################################################################################
-    
     if obj1.vertices.shape[0] != obj2.vertices.shape[0]:
         raise Exception('objects are not one-to-one')
     
@@ -138,8 +130,6 @@ def get_transform(x1, x2):
         A (np.array) Array representing the linear transformation from x1 to x2
 
     """
-    
-    #################################################################################
     
     assert x1.shape[0] == 6
     assert x1.shape[0] == 6
@@ -166,8 +156,6 @@ def get_linear_transformations(smooth, orig):
         lin_trans (np.array) array of shape (V, 9) where V is the number of vertices in the mesh, and each entry
             is the flattened linear transformation matrix of surface normals for the corresponding pair of vertices.
     """
-    
-    #################################################################################
     
     smooth_sns = surface_normals = np.concatenate((smooth.vertex_normals, smooth.vertices), axis=1)
     orig_sns = surface_normals = np.concatenate((orig.vertex_normals, orig.vertices), axis=1)
@@ -197,8 +185,6 @@ def smooth_mesh_lap(mesh, iterations):
         mesh: smoothed mesh
         mesh: original mesh"""
     
-    #################################################################################
-    
     orig = mesh
     smooth = mesh.copy()
     smooth = trimesh.smoothing.filter_laplacian(smooth, iterations=iterations)
@@ -220,8 +206,6 @@ def smooth_mesh_mut_dif(mesh, iterations):
         mesh: smoothed mesh
         mesh: original mesh"""
     
-    #################################################################################
-    
     orig = mesh
     smooth = mesh.copy()
     smooth = trimesh.smoothing.filter_mut_dif_laplacian(smooth, iterations=iterations)
@@ -242,8 +226,6 @@ def smooth_mesh_taubin(mesh, iterations):
     Returns:
         mesh: smoothed mesh
         mesh: original mesh"""
-    
-    #################################################################################
     
     orig = mesh
     smooth = mesh.copy()
@@ -267,8 +249,6 @@ def smooth_mesh(mesh, iterations, type='lap'):
     Returns:
         mesh: result of chosen algorithm
         mesh: original mesh"""
-    
-    #################################################################################
     
     if type == 'lap':
         return smooth_mesh_lap(mesh, iterations)
@@ -305,8 +285,6 @@ def build_offset_dataset(mesh, smooth_iter=200, lap_type='mesh', smooth_type='la
         dictionary: dictionary of all data of mesh (eigen vectors, vertices of smoothed mesh, 
         offsets between original and smoothed mesh)
         mesh: smoothed mesh of original mesh"""
-    
-    #################################################################################
 
     smooth, orig = smooth_mesh(mesh, smooth_iter, type=smooth_type)
     offsets = get_offsets(smooth, orig)
@@ -328,27 +306,24 @@ def build_offset_dataset(mesh, smooth_iter=200, lap_type='mesh', smooth_type='la
 
 def build_norms_dataset(mesh, smooth_iter=200, lap_type='mesh', smooth_type='lap'):
     
-     """Creates a dataset for the normal of offsets between original mesh and the smoothed mesh
-    
+    """Creates a dataset for the normal of offsets between original mesh and the smoothed mesh
+
     Smooths the given mesh based on a given number of iterations and then calculates the linear
     transformation between the original and smooth mesh. Then, calculates the eigen values and 
     vectors of the smooth mesh and places the data in a dictionary divided into fouriers, points, 
     and targets. Returns the dataset as well as the smoothed mesh
-    
+
     Args:
         mesh (mesh): mesh of the current object
         smooth_iter (int): number of times smoothing algorithm is applied to mesh
         lap_type (string): type of laplacian for eigen data
         smooth_type (string): type of smoothing algorithm used on mesh
-    
-    
+
     Returns:
         dictionary: dictionary of all data of mesh (eigen vectors, normals and vertices of smoothed mesh, 
         targets of surface normals)
         mesh: smoothed mesh of original mesh"""
-    
-    #################################################################################
-    
+
     smooth, orig = smooth_mesh(mesh, smooth_iter, type=smooth_type)
     lin_trans = get_linear_transformations(smooth, orig)
     
@@ -385,8 +360,6 @@ def build_blank_dataset(blank, DIR_NAME, lap_type='mesh'):
     Returns:
         file: location of dataset"""
     
-    #################################################################################
-    
     if lap_type == 'mesh':
         e_vals, e_vecs = mesh_laplacian_eigenmap(np.array(blank.vertices), np.array(blank.faces), 100)
     else:
@@ -421,7 +394,6 @@ def get_sphere(size=0):
     Returns:
         mesh: blank sphere with subdivision"""
     
-    #################################################################################
     
     sphere = trimesh.primitives.Sphere()
     if size > 0:
@@ -450,8 +422,6 @@ def generate_pred_mesh(offset_preds, blank):
     
     Returns:
         mesh: predicted mesh based on predicted offsets"""
-    
-    #################################################################################
     
     pred_verts =  blank.vertices - offset_preds
     inference = trimesh.Trimesh(vertices=pred_verts, faces=blank.faces)
