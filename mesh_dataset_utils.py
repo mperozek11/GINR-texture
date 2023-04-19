@@ -328,7 +328,7 @@ def build_offset_dataset(mesh, smooth_iter=200, lap_type='mesh', smooth_type='la
 
 def build_norms_dataset(mesh, smooth_iter=200, lap_type='mesh', smooth_type='lap'):
     
-    """Creates a dataset for the normal of offsets between original mesh and the smoothed mesh
+     """Creates a dataset for the normal of offsets between original mesh and the smoothed mesh
     
     Smooths the given mesh based on a given number of iterations and then calculates the linear
     transformation between the original and smooth mesh. Then, calculates the eigen values and 
@@ -363,6 +363,7 @@ def build_norms_dataset(mesh, smooth_iter=200, lap_type='mesh', smooth_type='lap
     dataset = {
         'fourier' : e_vecs,
         'points' : np.concatenate((smooth.vertex_normals, smooth.vertices), axis=1),
+        'faces': smooth.faces,
         'target' : lin_trans      
           }
     return dataset, smooth
