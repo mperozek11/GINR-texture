@@ -1,0 +1,60 @@
+Ball Creation:
+
+Spikeyball1:
+    - Subdivided icosphere with 1 iteration
+    - Beveled vertices
+    - Extrude and scale
+    - Scale midpoint to create needles
+    - Subdivide and smooth laplacian twice
+    
+Spikeyball2
+    - Beveled vertices
+    - Extrude and scale
+    - Scale midpoint to create needles
+    - Subdivide and smooth laplacian three times
+    
+Blobball
+    - Created 2 meshes (1 big icosphere and 1 small sm)
+    - Made big sphere the parent of the small sphere
+    - Put instances of smaller sphere on all bigger sphere's vertices
+    - Make all instances real and detach from each other
+    - Joined all meshes together
+    - Selected all outside vertices and deleted interior
+    - Cleaned non-manifold
+    - Remeshed
+    
+RounderPixelCube
+    - Created 2 meshes (1 big sphere and 1 small cube)
+    - Made big sphere the parent of the small cube
+    - Put instances of smaller cube on all bigger sphere's vertices
+    - Make all instances real and detach from each other
+    - Joined all meshes together
+    - Selected all outside vertices and deleted interior
+    - Cleaned non-manifold
+    - Remeshed
+    
+Crinkleball
+    - Sculpted sphere to look wrinkly
+    - Smooth vertices
+    - Remesh
+    
+NeedleBall
+    - Used UV sphere
+    - Beveled vertices
+    - Extrude and scale
+    - Scale midpoint to create needles
+    - Subdivide and smooth laplacian three times
+    
+GeometricQuadSpikeyBall
+    - Used quadsphere
+    - Beveled vertices
+    - Extrude and scale
+    - Scale midpoint to create needles
+    - Subdivide and smooth laplacian three times
+    
+QuadSpikeyBall
+    - Subdivided quadsphere with 1 iteration
+    - Beveled vertices
+    - Extrude and scale
+    - Scale midpoint to create needles
+    - Subdivide and smooth laplacian twice
