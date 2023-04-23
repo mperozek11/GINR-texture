@@ -205,7 +205,7 @@ def smooth_mesh_mut_dif(mesh, iterations):
     Returns:
         mesh: smoothed mesh
         mesh: original mesh"""
-    
+
     orig = mesh
     smooth = mesh.copy()
     smooth = trimesh.smoothing.filter_mut_dif_laplacian(smooth, iterations=iterations)
@@ -343,10 +343,10 @@ def build_norms_dataset(mesh, smooth_iter=200, lap_type='mesh', smooth_type='lap
           }
     return dataset, smooth
 
-def build_time_dataset(mesh, smooth_iter, lap_type='mesh', smooth_type='lap', sample_size=.20, type_of_offset='norm'):
+def build_time_dataset(mesh, max_smooth, smooth_steps, lap_type='mesh', smooth_type='lap', sample_size=.20, type_of_offset='norm'):
     
     """Creates a dataset for the normal of offsets between original mesh and the smoothed mesh
-
+ 
     Smooths the given mesh based on a given number of iterations and then calculates the linear
     transformation between the original and smooth mesh. Then, calculates the eigen values and 
     vectors of the smooth mesh and places the data in a dictionary divided into fouriers, points, 
@@ -354,7 +354,8 @@ def build_time_dataset(mesh, smooth_iter, lap_type='mesh', smooth_type='lap', sa
 
     Args:
         mesh (mesh): mesh of the current object
-        smooth_iter (int): number of times smoothing algorithm is applied to mesh
+        max_smooth (int): highest number of times smoothing algorithm is applied to mesh
+        smooth_steps (int): number of smoothings between 0 - smooth_steps smoothings
         lap_type (string): type of laplacian for eigen data
         smooth_type (string): type of smoothing algorithm used on mesh
         sample_size (float): size of sample
@@ -364,21 +365,49 @@ def build_time_dataset(mesh, smooth_iter, lap_type='mesh', smooth_type='lap', sa
         targets of surface normals)
         mesh: smoothed mesh of original mesh"""
     
-    dataset={}
-    if(type_of_offset=='norm'):
-        #print("inside1")
-        dataset, smooth=build_norms_dataset(mesh, smooth_iter, lap_type, smooth_type)
-    else:
-        #print("inside")
-        dataset, smooth=build_offset_dataset(mesh, smooth_iter, lap_type, smooth_type)
-    #picks indices from the dataset (assuming that len(fouriers)=len(targets))
+    smooth_levels = [int(max_smooth/i) for i in range(1, smooth_steps + 1)] + [0]
+    smooth_levels.reverse()
     
-    sample_indices=np.random.sample(range(0, len(dataset['fourier']), len(dataset['fourier']*sample_size)
-    dataset={
-        'fourier':[dataset['fourier'][i] for i in sample_indices],
-        'targets':[dataset['target'][i] for i in sample_indices]
-    }
-    return dataset, smooth
+    fourier_l = []
+    target_l = []
+    
+    for i, lvl in enumerate(smooth_levels):
+        
+        if i > 0:
+            iterations = lvl - smooth_levels[i-1]
+        else:
+            iterations = lvl
+        
+        print(f'building data for step: {i+1} cum smooth: {lvl} addit smooth: {iterations}')
+        if(type_of_offset=='norm'):
+            #print("inside1")
+            dataset, smooth = build_norms_dataset(mesh, iterations, lap_type, smooth_type)
+        else:
+            #print("inside")
+            dataset, smooth = build_offset_dataset(mesh, iterations, lap_type, smooth_type)
+        
+        ds_size = dataset['fourier'].shape[0]
+        
+        time_var = np.ones((ds_size, 1)) * (i/smooth_steps)
+        dataset['fourier'] = np.append(dataset['fourier'], time_var, 1)
+        
+        if i == smooth_steps:
+            final_fourier = dataset['fourier']
+            final_verts = smooth.vertices
+            final_faces = smooth.faces
+        
+        sample_indices = np.random.choice(np.arange(ds_size), int(ds_size * sample_size))
+        
+        fourier_l.append(dataset['fourier'][sample_indices,:])
+        target_l.append(dataset['target'][sample_indices,:])
+
+        mesh = smooth
+    
+    fourier = np.concatenate(fourier_l)
+    target = np.concatenate(target_l)
+    
+    return {'fourier': fourier, 'target': target, 'final_fourier': final_fourier, 'final_verts': final_verts, 'final_faces': final_faces}
+        
 
 
 def build_blank_dataset(blank, DIR_NAME, lap_type='mesh'):
